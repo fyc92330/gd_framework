@@ -1,0 +1,33 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.5'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'org.chun'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// spring
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	// lombok
+	var lombokVersion = '1.18.20'
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	testImplementation group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	// test
+	testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
