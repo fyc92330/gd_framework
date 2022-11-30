@@ -21,7 +21,7 @@ import java.util.Objects;
 
 @Slf4j
 @RestControllerAdvice
-public class ApiResponseAdvice implements ResponseBodyAdvice<ApiResponse<?>> {
+public class ApiResponseAdvice implements ResponseBodyAdvice<BaseModel<?>> {
 
   @Override
   public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
@@ -30,11 +30,10 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<ApiResponse<?>> {
   }
 
   @Override
-  public ApiResponse<?> beforeBodyWrite(ApiResponse<?> body, MethodParameter returnType, MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
+  public BaseModel<?> beforeBodyWrite(BaseModel<?> body, MethodParameter returnType, MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
     assert body != null;
-    BaseModel<?> data = body.getData();
-    Class<?> dataClass = data.getClass();
-    Map<String, Object> responseBody = JsonUtil.toMap(data);
+    Class<?> dataClass = body.getClass();
+    Map<String, Object> responseBody = JsonUtil.toMap(body);
     String[] param2Header = Objects.requireNonNull(returnType.getMethodAnnotation(ProcessorAPI.class)).header();
 
     for (String paramKey : param2Header) {
@@ -45,6 +44,6 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<ApiResponse<?>> {
       }
     }
 
-    return new ApiResponse<>((BaseModel<?>) JsonUtil.convert(responseBody, dataClass), HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
+    return (BaseModel<?>) JsonUtil.convert(responseBody, dataClass);
   }
 }

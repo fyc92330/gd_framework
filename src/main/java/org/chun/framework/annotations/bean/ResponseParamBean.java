@@ -12,6 +12,7 @@ public class ResponseParamBean implements BaseParamBean {
 
   public ResponseParamBean() {
     count = 0;
+    nodes = new Node[0];
   }
 
   public ResponseParamBean(String key, String value) {
@@ -67,6 +68,10 @@ public class ResponseParamBean implements BaseParamBean {
 
     ResponseParamBean bean;
     ProcessorApiColumn.Response column;
+
+    ResponseParamBuilder(){
+      this.bean = new ResponseParamBean();
+    }
 
     public ResponseParamBean.ResponseParamBuilder classify(ProcessorApiColumn.Response responseColumn) {
       this.column = responseColumn;

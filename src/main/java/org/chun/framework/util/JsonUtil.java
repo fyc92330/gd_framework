@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.SneakyThrows;
 import org.springframework.boot.json.JacksonJsonParser;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ public class JsonUtil {
       .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
       .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+      .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
       .build()
       .registerModule(new JavaTimeModule())
       .setSerializationInclusion(JsonInclude.Include.NON_NULL);

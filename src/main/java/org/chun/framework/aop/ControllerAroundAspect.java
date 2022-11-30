@@ -1,6 +1,8 @@
 package org.chun.framework.aop;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.aspectj.lang.JoinPoint;
@@ -25,6 +27,7 @@ import org.chun.framework.annotations.handler.PageHandler;
 import org.chun.framework.annotations.handler.SkipHandler;
 import org.chun.framework.demo.model.ApiResponse;
 import org.chun.framework.demo.model.base.BaseModel;
+import org.chun.framework.demo.model.rq.DemoControllerRequest;
 import org.chun.framework.util.AnnotationUtil;
 import org.chun.framework.util.JsonUtil;
 import org.springframework.http.HttpStatus;
@@ -32,13 +35,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.chun.framework.annotations.enums.ProcessorApiColumn.Request.DECODE;
 import static org.chun.framework.annotations.enums.ProcessorApiColumn.Request.DECRYPT;
@@ -68,6 +75,7 @@ public class ControllerAroundAspect {
 
   @Before(value = "appProgrammingInterface()")
   protected void beforeApi(JoinPoint joinPoint) throws Exception {
+    log.info(" >>> before api <<< ");
     // 取得物件與參數
     MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
     Method method = methodSignature.getMethod();
@@ -86,28 +94,27 @@ public class ControllerAroundAspect {
       if (params[i].getAnnotation(RequestBody.class) != null) {
         Class<?> requestBodyClass = args[i].getClass();
         Map<String, Object> requestBody = JsonUtil.toMap(args[i]);
+        log.error(" >>> data:{}", requestBody);
 
         // 取得 ApiFor 對請求操作的值 針對傳入的參數做處理
         List<String> fieldList = this.apiFieldList(methodName, requestBodyClass);
+        Map<String, Object> body = new HashMap<>();
         for (String key : requestBody.keySet()) {
-          if (fieldList.contains(key)) {
-            requestBody.put(key, this.requestHandler(requestBody.get(key), bean.get(key), annotation));
-          } else {
-            requestBody.remove(key);
+          if(fieldList.contains(key)){
+            body.put(key, this.requestHandler(requestBody.get(key),bean.get(key), annotation));
           }
         }
 
-        requestBody.put("baseClass", baseClass);
-        args[i] = JsonUtil.convert(requestBody, requestBodyClass);
+        body.put("baseClass", baseClass);
+        args[i] = JsonUtil.convert(body, requestBodyClass);
         break;
       }
     }
-
-    log.info(">>> 轉換RequestBody參數 <<<");
   }
 
   @After(value = "appProgrammingInterface()")
   protected Object afterApi(JoinPoint joinPoint) throws Exception {
+    log.info(" >>> after api <<< ");
     // 取得物件與參數
     MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
     Method method = methodSignature.getMethod();
@@ -137,7 +144,7 @@ public class ControllerAroundAspect {
 
   @AfterReturning(value = "appProgrammingInterface()", returning = "model")
   ApiResponse<?> afterReturn(JoinPoint joinPoint, Object model) {
-    log.error("afterReturn");
+    log.info(" >>> after return <<< ");
     return new ApiResponse<>((BaseModel<?>) model, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
   }
 
@@ -213,8 +220,12 @@ public class ControllerAroundAspect {
    * @return
    */
   private List<String> apiFieldList(String methodName, Class<?> clazz) {
-    return Arrays.stream(clazz.getFields())
-        .filter(field -> Arrays.asList(field.getAnnotation(ApiFor.class).name()).contains(methodName))
+    Predicate<Field> apiForMethodFilter = field -> {
+      ApiFor apiFor = field.getAnnotation(ApiFor.class);
+      return apiFor != null && Arrays.asList(apiFor.name()).contains(methodName);
+    };
+    return Arrays.stream(clazz.getDeclaredFields())
+        .filter(apiForMethodFilter)
         .map(Field::getName)
         .toList();
   }

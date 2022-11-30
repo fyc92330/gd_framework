@@ -12,6 +12,7 @@ public class RequestParamBean implements BaseParamBean {
 
   public RequestParamBean() {
     count = 0;
+    nodes = new Node[0];
   }
 
   public RequestParamBean(String key, String value) {
@@ -67,6 +68,10 @@ public class RequestParamBean implements BaseParamBean {
 
     RequestParamBean bean;
     ProcessorApiColumn.Request column;
+
+    RequestParamBuilder(){
+      this.bean = new RequestParamBean();
+    }
 
     public RequestParamBuilder classify(ProcessorApiColumn.Request requestColumn) {
       this.column = requestColumn;
